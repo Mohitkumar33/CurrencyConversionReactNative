@@ -1,6 +1,6 @@
 import React from 'react';
-import { useColorScheme } from 'react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { StyleSheet, useColorScheme } from 'react-native';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { Provider as PaperProvider } from 'react-native-paper';
 import { darkTheme, lightTheme } from './src/theme';
 import { HomeScreen } from './src/screens/HomeScreen';
@@ -12,10 +12,16 @@ function App() {
   return (
     <SafeAreaProvider>
       <PaperProvider theme={theme}>
-        <HomeScreen />
+        <SafeAreaView style={styles.container}>
+          <HomeScreen />
+        </SafeAreaView>
       </PaperProvider>
     </SafeAreaProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#fff' },
+});
 
 export default App;
