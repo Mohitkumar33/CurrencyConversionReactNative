@@ -1,16 +1,25 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, ActivityIndicator } from 'react-native';
-import { Text, TextInput, DataTable, useTheme } from 'react-native-paper';
+import { ScrollView, StyleSheet } from 'react-native';
+import { Text, TextInput, useTheme, ActivityIndicator } from 'react-native-paper';
 import { getLatestRates } from '../api/openExchange';
+import { CurrencyCard } from '../components/CurrencyCard';
+import { AudInputCard } from '../components/AudInputCard';
 
 const TARGET_CURRENCIES = ['CAD', 'EUR', 'GBP', 'NZD', 'USD'];
+
+const currencyImages: Record<string, any> = {
+  CAD: require('../assets/images/cad.png'),
+  EUR: require('../assets/images/eur.png'),
+  GBP: require('../assets/images/gbp.png'),
+  NZD: require('../assets/images/nzd.png'),
+  USD: require('../assets/images/usd.png'),
+};
 
 export const HomeScreen = () => {
   const [aud, setAud] = useState('100');
   const [rates, setRates] = useState<Record<string, number> | null>(null);
   const [loading, setLoading] = useState(false);
   const { colors } = useTheme();
-
 
   useEffect(() => {
     fetchRates();
@@ -20,7 +29,6 @@ export const HomeScreen = () => {
     try {
       setLoading(true);
       const data = await getLatestRates();
-      //   const data = await res.json();
       setRates(data.rates);
     } catch (err) {
       console.error('Error fetching rates:', err);
@@ -29,7 +37,6 @@ export const HomeScreen = () => {
     }
   };
 
-  // Convert AUD → target currency
   const convertAudTo = (target: string) => {
     if (!rates) return '0.00';
     const audRate = rates['AUD'];
@@ -38,52 +45,45 @@ export const HomeScreen = () => {
     return (parseFloat(aud) * (targetRate / audRate)).toFixed(2);
   };
 
+  const rateToAud = (target: string) => {
+    if (!rates) return 0;
+    const audRate = rates['AUD'];
+    const targetRate = rates[target];
+    if (!audRate || !targetRate) return 0;
+    return audRate / targetRate;
+  };
+
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
       <Text variant="headlineMedium" style={styles.title}>
         Currency Converter
       </Text>
 
-      <TextInput
-        label="Amount in AUD"
-        mode="outlined"
-        keyboardType="numeric"
-        value={aud}
-        onChangeText={setAud}
-        style={styles.input}
+      {/* AUD Input Card */}
+      <AudInputCard
+        amount={aud}
+        onChangeAmount={setAud}
+        imageUri={require('../assets/images/aud.png')}
       />
 
       {loading && <ActivityIndicator style={{ marginVertical: 20 }} />}
 
-      {rates && (
-        <DataTable>
-          <DataTable.Header>
-            <DataTable.Title>Currency</DataTable.Title>
-            <DataTable.Title numeric>Amount</DataTable.Title>
-          </DataTable.Header>
-
-          {TARGET_CURRENCIES.map(currency => (
-            <DataTable.Row key={currency}>
-              <DataTable.Cell>{currency}</DataTable.Cell>
-              <DataTable.Cell numeric>{convertAudTo(currency)}</DataTable.Cell>
-            </DataTable.Row>
-          ))}
-        </DataTable>
-      )}
-    </View>
+      {/* Target currency cards */}
+      {rates &&
+        TARGET_CURRENCIES.map(currency => (
+          <CurrencyCard
+            key={currency}
+            currency={currency}
+            amount={convertAudTo(currency)}
+            rateToAud={rateToAud(currency)}
+            imageUri={currencyImages[currency]}
+          />
+        ))}
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-  },
-  title: {
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  input: {
-    marginBottom: 24,
-  },
+  container: { flex: 1, padding: 16 },
+  title: { textAlign: 'center', marginBottom: 20 },
 });
